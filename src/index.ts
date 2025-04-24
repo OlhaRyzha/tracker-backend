@@ -32,7 +32,11 @@ async function start() {
     
     // Register plugins
   await fastify.register(cors, {
-    origin: true, 
+    origin: [
+    'http://localhost:3000', 
+    'https://olharyzha.github.io', 
+    'https://your-vercel-frontend.vercel.app'
+  ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
