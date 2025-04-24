@@ -31,12 +31,13 @@ async function start() {
     });
     
     // Register plugins
-    await fastify.register(cors, {
-      origin: config.cors.origin,
-      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization'],
-    });
-    
+  await fastify.register(cors, {
+    origin: true, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
+    // Serve static files (public)  
     await fastify.register(multipart, {
       limits: {
         fileSize: config.upload.maxFileSize,
