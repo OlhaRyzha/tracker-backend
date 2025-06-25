@@ -1,59 +1,116 @@
-import fastify from 'fastify';
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
+import fastifyStatic from '@fastify/static';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
+import routes from './routes';
+import { initializeDb, getTracks } from './utils/db';
+import config from './config';
+import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { getTracks } from './utils/db';
 
-const PORT = Number(process.env.PORT) || 8000;
+async function start() {
+  try {
+    console.log(`Starting server in ${config.server.env} mode`);
 
-const app = fastify();
+    await initializeDb();
 
-app.get('/api/health', async () => {
-  return { status: 'ok' };
-});
-
-const wss = new WebSocketServer({ noServer: true });
-const clients = new Set<WebSocket>();
-
-wss.on('connection', (ws) => {
-  console.log('➕ WebSocket client connected');
-  clients.add(ws);
-
-  ws.on('close', () => {
-    console.log('➖ Client disconnected');
-    clients.delete(ws);
-  });
-});
-
-app.server.on('upgrade', (req, socket, head) => {
-  if (req.url === '/ws') {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit('connection', ws, req);
+    const fastify = Fastify({
+      logger: {
+        level: config.logger.level,
+        transport: config.isDevelopment
+          ? {
+              target: 'pino-pretty',
+              options: {
+                translateTime: 'HH:MM:ss Z',
+                ignore: 'pid,hostname',
+              },
+            }
+          : undefined,
+      },
     });
-  } else {
-    socket.destroy();
-  }
-});
 
-async function sendRandomTrack() {
-  const { tracks } = await getTracks({ page: 1, limit: 100 });
-  if (!tracks.length) return;
+    await fastify.register(cors, {
+      origin: [
+        'http://localhost:3000',
+        'https://olharyzha.github.io',
+        'https://your-vercel-frontend.vercel.app',
+      ],
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+    });
 
-  const track = tracks[Math.floor(Math.random() * tracks.length)];
-  const message = JSON.stringify({ type: 'ACTIVE_TRACK', payload: track });
+    await fastify.register(multipart, {
+      limits: {
+        fileSize: config.upload.maxFileSize,
+      },
+    });
 
-  for (const client of clients) {
-    if (client.readyState === client.OPEN) {
-      client.send(message);
+    await fastify.register(fastifyStatic, {
+      root: config.storage.uploadsDir,
+      prefix: '/api/files/',
+      decorateReply: false,
+    });
+
+    await fastify.register(swagger, {
+      openapi: {
+        info: {
+          title: 'Music Tracks API',
+          description: 'API for managing music tracks',
+          version: '1.0.0',
+        },
+      },
+    });
+
+    await fastify.register(swaggerUi, {
+      routePrefix: '/documentation',
+      uiConfig: {
+        docExpansion: 'list',
+        deepLinking: true,
+      },
+    });
+
+    await fastify.register(routes);
+
+    const server = createServer(fastify.server);
+
+    const wss = new WebSocketServer({ server, path: '/ws' });
+    const clients = new Set<WebSocket>();
+
+    wss.on('connection', (ws) => {
+      console.log('➕ New WebSocket client connected');
+      clients.add(ws);
+
+      ws.on('close', () => {
+        console.log('➖ Client disconnected');
+        clients.delete(ws);
+      });
+    });
+
+    async function sendRandomTrack() {
+      const { tracks } = await getTracks({ page: 1, limit: 100 });
+      if (tracks.length === 0) return;
+
+      const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+      const msg = JSON.stringify({ type: 'ACTIVE_TRACK', payload: randomTrack });
+
+      for (const client of clients) {
+        if (client.readyState === WebSocket.OPEN) client.send(msg);
+      }
     }
+
+    setInterval(sendRandomTrack, Math.random() * 2000 + 3000);
+
+    await server.listen(config.server.port, config.server.host);
+
+    console.log(`🚀 Server is running on http://${config.server.host}:${config.server.port}`);
+    console.log(`📘 Swagger docs: http://${config.server.host}:${config.server.port}/documentation`);
+    console.log(`🟢 WS server: ws://${config.server.host}:${config.server.port}/ws`);
+  } catch (error) {
+    console.error('Error starting server:', error);
+    process.exit(1);
   }
 }
 
-setInterval(sendRandomTrack, Math.random() * 2000 + 3000);
-
-app.listen({ port: PORT }, (err) => {
-  if (err) {
-    console.error('❌ Error starting server:', err);
-    process.exit(1);
-  }
-  console.log(`🚀 Server listening on http://localhost:${PORT}`);
-  console.log(`🟢 WS server listening on ws://localhost:${PORT}/ws`);
-});
+start();
