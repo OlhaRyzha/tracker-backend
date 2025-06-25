@@ -102,14 +102,14 @@ async function start() {
 
     setInterval(sendRandomTrack, Math.random() * 2000 + 3000);
 
-    await server.listen({
-      port: config.server.port,
-      host: '0.0.0.0',
-    });
+    const PORT = process.env.PORT || config.server.port;
+    const HOST = '0.0.0.0';
 
-    console.log(`🚀 Server is running on http://0.0.0.0:${config.server.port}`);
-    console.log(`📘 Swagger docs: http://0.0.0.0:${config.server.port}/documentation`);
-    console.log(`🟢 WS server: ws://0.0.0.0:${config.server.port}/ws`);
+    await server.listen(PORT, HOST);
+
+    console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
+    console.log(`📘 Swagger docs: http://${HOST}:${PORT}/documentation`);
+    console.log(`🟢 WS server: ws://${HOST}:${PORT}/ws`);
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);
