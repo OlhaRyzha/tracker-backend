@@ -105,11 +105,11 @@ async function start() {
     const PORT = process.env.PORT || config.server.port;
     const HOST = '0.0.0.0';
 
-    await server.listen(PORT, HOST);
-
-    console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
-    console.log(`📘 Swagger docs: http://${HOST}:${PORT}/documentation`);
-    console.log(`🟢 WS server: ws://${HOST}:${PORT}/ws`);
+    server.listen(Number(PORT), HOST, () => {
+      console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
+      console.log(`📘 Swagger docs: http://${HOST}:${PORT}/documentation`);
+      console.log(`🟢 WS server: ws://${HOST}:${PORT}/ws`);
+    });
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);
