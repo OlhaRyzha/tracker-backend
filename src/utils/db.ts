@@ -316,21 +316,7 @@ export const deleteMultipleTracks = async (ids: string[]): Promise<BatchDeleteRe
  * @param buffer File data buffer
  * @returns Generated filename of the saved file
  */
-export const saveAudioFile = async (id: string, filename: string, buffer: Buffer) => {
-  const ext = path.extname(filename);
-  const newFilename = `${id}${ext}`;
-  const filePath = path.join(config.storage.uploadsDir, newFilename);
-  
-  await fs.mkdir(config.storage.uploadsDir, { recursive: true });
-  await fs.writeFile(filePath, buffer);
-  return newFilename;
-};
 
-/**
- * Delete an audio file and remove its reference from the track
- * @param id ID of the track with the audio file to delete
- * @returns Boolean indicating success or failure
- */
 export const deleteAudioFile = async (id: string): Promise<boolean> => {
   try {
     const track = await getTrackById(id);
