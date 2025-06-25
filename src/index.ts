@@ -1,10 +1,10 @@
 import Fastify from 'fastify';
+import './wsServer';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
-import path from 'path';
 import routes from './routes';
 import { initializeDb } from './utils/db';
 import config from './config';
