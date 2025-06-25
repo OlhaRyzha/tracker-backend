@@ -5,8 +5,9 @@ import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import routes from './routes';
-import { initializeDb } from './utils/db';
+import { initializeDb, getTracks } from './utils/db';
 import config from './config';
+import { WebSocketServer, WebSocket } from 'ws';
 
 async function start() {
   try {
@@ -71,15 +72,49 @@ async function start() {
 
     await fastify.register(routes);
 
-    const port = Number(process.env.PORT) || config.server.port;
+    const clients = new Set<WebSocket>();
+    const wss = new WebSocketServer({ noServer: true });
 
-    await fastify.listen({
-      port,
-      host: '0.0.0.0',
+    wss.on('connection', (ws) => {
+      console.log('➕ New WebSocket client connected');
+      clients.add(ws);
+
+      ws.on('close', () => {
+        console.log('➖ Client disconnected');
+        clients.delete(ws);
+      });
     });
 
+    const port = Number(process.env.PORT) || config.server.port;
+
+    await fastify.listen({ port, host: '0.0.0.0' });
+
+    fastify.server.on('upgrade', (request, socket, head) => {
+      if (request.url === '/ws') {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request);
+        });
+      }
+    });
+
+    // Periodically send random track
+    async function sendRandomTrack() {
+      const { tracks } = await getTracks({ page: 1, limit: 100 });
+      if (tracks.length === 0) return;
+
+      const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+      const msg = JSON.stringify({ type: 'ACTIVE_TRACK', payload: randomTrack });
+
+      for (const client of clients) {
+        if (client.readyState === WebSocket.OPEN) client.send(msg);
+      }
+    }
+
+    setInterval(sendRandomTrack, Math.random() * 2000 + 3000);
+
     console.log(`🚀 Server is running on http://0.0.0.0:${port}`);
-    console.log(`📘 Swagger documentation available at http://0.0.0.0:${port}/documentation`);
+    console.log(`📘 Swagger docs: http://0.0.0.0:${port}/documentation`);
+    console.log(`🟢 WS server ready at ws://0.0.0.0:${port}/ws`);
   } catch (error) {
     console.error('Error starting server:', error);
     process.exit(1);
