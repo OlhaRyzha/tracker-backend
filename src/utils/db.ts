@@ -80,69 +80,65 @@ export const getGenres = async (): Promise<string[]> => {
  */
 export const getTracks = async (params: QueryParams = {}): Promise<GetTracksResult> => {
   try {
-    const files = await fs.readdir(TRACKS_DIR);
-    
-    let tracks: Track[] = [];
-    
-    for (const file of files) {
-      if (file.endsWith('.json')) {
-        const content = await fs.readFile(path.join(TRACKS_DIR, file), 'utf-8');
-        tracks.push(JSON.parse(content));
-      }
-    }
-    
-    // Apply filtering
+    const files = await fs.readdir(config.storage.tracksDir);
+    const jsonFiles = files.filter((file) => file.endsWith('.json'));
+    const contents = await Promise.all(
+      jsonFiles.map((file) =>
+        fs.readFile(path.join(config.storage.tracksDir, file), 'utf-8')
+      )
+    );
+    let tracks: Track[] = contents.map((c) => JSON.parse(c));
+
     if (params.search) {
       const searchLower = params.search.toLowerCase();
-      tracks = tracks.filter(track => 
-        track.title.toLowerCase().includes(searchLower) ||
-        track.artist.toLowerCase().includes(searchLower) ||
-        (track.album && track.album.toLowerCase().includes(searchLower))
+      tracks = tracks.filter(
+        (track) =>
+          track.title.toLowerCase().includes(searchLower) ||
+          track.artist.toLowerCase().includes(searchLower) ||
+          (track.album && track.album.toLowerCase().includes(searchLower))
       );
     }
-    
     if (params.genre) {
-      tracks = tracks.filter(track => track.genres.includes(params.genre as string));
+      tracks = tracks.filter((track) =>
+        track.genres.includes(params.genre as string)
+      );
     }
-    
     if (params.artist) {
       const artistLower = params.artist.toLowerCase();
-      tracks = tracks.filter(track => track.artist.toLowerCase().includes(artistLower));
+      tracks = tracks.filter((track) =>
+        track.artist.toLowerCase().includes(artistLower)
+      );
     }
-    
-    // Apply sorting
+
     if (params.sort) {
       const sortField = params.sort;
       const sortOrder = params.order || 'asc';
-      
       tracks.sort((a, b) => {
         const valueA = a[sortField] || '';
         const valueB = b[sortField] || '';
-        
         if (typeof valueA === 'string' && typeof valueB === 'string') {
-          return sortOrder === 'asc' 
+          return sortOrder === 'asc'
             ? valueA.localeCompare(valueB)
             : valueB.localeCompare(valueA);
         }
-        
         return 0;
       });
     } else {
-      // Default sort by createdAt
-      tracks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      tracks.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     }
-    
+
     const total = tracks.length;
-    
-    // Apply pagination
     const page = params.page || 1;
     const limit = params.limit || 10;
     const start = (page - 1) * limit;
     const end = start + limit;
-    
+
     return {
       tracks: tracks.slice(start, end),
-      total
+      total,
     };
   } catch (error) {
     console.error('Failed to read tracks:', error);

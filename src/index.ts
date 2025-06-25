@@ -50,6 +50,8 @@ async function start() {
       root: config.storage.uploadsDir,
       prefix: '/api/files/',
       decorateReply: false,
+      maxAge: '7d',
+      immutable: true,
     });
 
     await fastify.register(swagger, {
