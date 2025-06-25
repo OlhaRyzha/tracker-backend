@@ -10,6 +10,6 @@
     "declaration": true,
     "resolveJsonModule": true
   },
-   "include": ["src/**/*", "./wsServer.ts"],
+   "include": ["src/**/*", "./src/index.ts"],
   "exclude": ["node_modules", "dist", "src/__tests__/**/*", "**/*.test.ts"]
 }
