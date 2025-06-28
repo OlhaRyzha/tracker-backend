@@ -146,6 +146,22 @@ export const getTracks = async (params: QueryParams = {}): Promise<GetTracksResu
   }
 };
 
+export const getAllTracksRaw = async (): Promise<Track[]> => {
+  try {
+    const files = await fs.readdir(config.storage.tracksDir);
+    const jsonFiles = files.filter((file) => file.endsWith('.json'));
+    const contents = await Promise.all(
+      jsonFiles.map((file) =>
+        fs.readFile(path.join(config.storage.tracksDir, file), 'utf-8')
+      )
+    );
+    return contents.map((c) => JSON.parse(c));
+  } catch (error) {
+    console.error('Failed to read tracks:', error);
+    return [];
+  }
+};
+
 /**
  * Get a track by its slug (URL-friendly version of title)
  * @param slug The slug to search for

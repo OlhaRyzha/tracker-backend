@@ -16,7 +16,8 @@
     "test:ci": "vitest run --reporter=verbose",
     "bd:reset": "rm -rf ./data && cp -r ./data-initial ./data",
     "seed": "ts-node src/seed.ts",
-    "seed:prod": "node dist/seed.js"
+    "seed:prod": "node dist/seed.js",
+    "ws:connect": "wscat -c ws://localhost:8000/ws"
   },
   "keywords": [],
   "author": "",
@@ -31,7 +32,6 @@
     "dotenv": "^16.4.7",
     "dotenv-expand": "^12.0.1",
     "fastify": "^5.2.1",
-    "fluent-ffmpeg": "^2.1.3",
     "nodemon": "^3.1.9",
     "pino-pretty": "^13.0.0",
     "ts-node": "^10.9.2",
@@ -46,7 +46,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vitest": "^3.0.7",
-    "ws": "^8.18.2"
+    "ws": "^8.18.2",
+    "wscat": "^6.1.0"
   },
   "engines": {
     "node": ">=v20.13.1",

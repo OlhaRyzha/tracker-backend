@@ -10,6 +10,7 @@ import {
   uploadTrackFile 
 } from './controllers/tracks.controller';
 import { getAllGenres } from './controllers/genres.controller';
+import { getAllTracksRaw } from './utils/db';
 
 export default async function routes(fastify: FastifyInstance) {
   // Define schemas for routes
@@ -75,6 +76,29 @@ export default async function routes(fastify: FastifyInstance) {
   });
   
   // Tracks
+    fastify.get('/api/all-tracks', {
+    schema: {
+      description: 'Get all tracks (no pagination/filter)',
+      tags: ['tracks'],
+      response: {
+        200: {
+          type: 'array',
+          items: trackSchema
+        },
+        500: errorSchema
+      }
+    },
+    handler: async (request, reply) => {
+      try {
+        const tracks = await getAllTracksRaw();
+        return reply.code(200).send(tracks);
+      } catch (error) {
+        request.log.error(error);
+        return reply.code(500).send({ error: 'Internal Server Error' });
+      }
+    }
+  });
+
   fastify.get('/api/tracks', {
     schema: {
       description: 'Get all tracks with pagination, sorting, and filtering',
