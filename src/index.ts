@@ -5,7 +5,7 @@ import fastifyStatic from '@fastify/static';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import routes from './routes';
-import { initializeDb, getTracks } from './utils/db';
+import { initializeDb, getAllTracksRaw } from './utils/db';
 import config from './config';
 import { WebSocketServer, WebSocket } from 'ws';
 
@@ -101,7 +101,7 @@ async function start() {
 
     // Periodically send random track
     async function sendRandomTrack() {
-      const { tracks } = await getTracks({ page: 1, limit: 100 });
+      const tracks = await getAllTracksRaw();
       if (tracks.length === 0) return;
 
       const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
