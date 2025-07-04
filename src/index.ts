@@ -30,9 +30,11 @@ async function start() {
       },
     });
 
+
     await fastify.register(cors, {
       origin: [
         'http://localhost:3000',
+        'http://localhost:8080', 
         'https://olharyzha.github.io',
         'https://your-vercel-frontend.vercel.app',
       ],
