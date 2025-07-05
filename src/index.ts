@@ -35,6 +35,7 @@ async function start() {
       origin: [
         'http://localhost:3000',
         'http://localhost:8080', 
+        'http://localhost:4173',
         'https://olharyzha.github.io',
         'https://your-vercel-frontend.vercel.app',
       ],

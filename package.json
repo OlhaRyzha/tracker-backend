@@ -5,7 +5,6 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
-    "prepare": "npm run build",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts",
@@ -17,7 +16,13 @@
     "bd:reset": "rm -rf ./data && cp -r ./data-initial ./data",
     "seed": "ts-node src/seed.ts",
     "seed:prod": "node dist/seed.js",
-    "ws:connect": "wscat -c ws://localhost:8000/ws"
+    "ws:connect": "wscat -c ws://localhost:8000/ws",
+    "docker:build": "docker buildx build --platform linux/amd64,linux/arm64 -t olharyzha/tracker-backend:latest --push .",
+    "docker:push": "docker push olharyzha/tracker-backend:latest",
+    "docker:run": "docker run --rm -p 8000:8000 olharyzha/tracker-backend:latest",
+    "docker:ps": "docker ps -a",
+    "docker:stopall": "docker stop $(docker ps -q)",
+    "docker:rmall": "docker rm $(docker ps -aq)"
   },
   "keywords": [],
   "author": "",
