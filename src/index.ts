@@ -8,6 +8,7 @@ import routes from './routes';
 import { initializeDb, getAllTracksRaw } from './utils/db';
 import config from './config';
 import { WebSocketServer, WebSocket } from 'ws';
+import compress from '@fastify/compress';
 
 async function start() {
   try {
@@ -28,6 +29,11 @@ async function start() {
             }
           : undefined,
       },
+    });
+
+    await fastify.register(compress, {
+      encodings: ['gzip', 'br'],
+      global: true,
     });
 
 
